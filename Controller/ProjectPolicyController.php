@@ -6,6 +6,20 @@ use Kanboard\Controller\BaseController;
 
 class ProjectPolicyController extends BaseController
 {
+    public function index()
+    {
+        $project = $this->getProject();
+        $this->logger->debug('TLP: render settings page for project '.$project['id']);
+        return $this->response->html(
+            $this->helper->layout->project(
+                'tasklinkpolicies:project/policies',
+                array(
+                    'project' => $project,
+                )
+            )
+        );
+    }
+
     public function save()
     {
         $project = $this->getProject();
@@ -25,14 +39,17 @@ class ProjectPolicyController extends BaseController
             'tlp_admin_can_override'               => empty($values['tlp_admin_can_override']) ? 0 : 1,
         );
 
+        $this->logger->debug('TLP: saving settings for project '.$project_id.' values='.json_encode($settings));
+
         if ($this->projectMetadataModel->save($project_id, $settings)) {
             $this->flash->success(t('Task Link Policies saved.'));
         } else {
             $this->flash->failure(t('Unable to save Task Link Policies.'));
         }
 
+        // Redirect back to our own tab
         return $this->response->redirect(
-            $this->helper->url->to('ProjectViewController', 'integrations', array('project_id' => $project_id), false, '', 'integrations'),
+            $this->helper->url->to('ProjectPolicyController', 'index', array('plugin' => 'TaskLinkPolicies', 'project_id' => $project_id)),
             true
         );
     }

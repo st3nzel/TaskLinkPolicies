@@ -1,7 +1,11 @@
 <?php
 
 return array(
+    'Project Policies' => 'Project Policies',
     'Task Link Policies' => 'Task Link Policies',
+    'Blocking & Dependencies' => 'Blocking & Dependencies',
+    'Duplicates & Backlog' => 'Duplicates & Backlog',
+    'Open Project Policies' => 'Open Project Policies',
     'Blockers must leave Backlog before blocked task can leave Backlog' => 'Blockers must leave Backlog before blocked task can leave Backlog',
     'Blockers must be closed before blocked task can be closed' => 'Blockers must be closed before blocked task can be closed',
     'Parent tasks require all children to be closed before closing' => 'Parent tasks require all children to be closed before closing',

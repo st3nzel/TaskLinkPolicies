@@ -41,6 +41,7 @@ class PolicyModel extends Base
                 }
             }
         }
+        $this->logger->debug('TLP: link type ids map='.json_encode($map));
         return $map;
     }
 
@@ -58,7 +59,9 @@ class PolicyModel extends Base
                 $first = $c;
             }
         }
-        return $first ? (int) $first['id'] : 0;
+        $backlogId = $first ? (int) $first['id'] : 0;
+        $this->logger->debug('TLP: backlog column for project '.$project_id.' is '.$backlogId.' (mode='.$mode.')');
+        return $backlogId;
     }
 
     protected function isTaskClosed(array $task)
@@ -84,8 +87,11 @@ class PolicyModel extends Base
                 $out[$lid][] = $other;
             }
         }
+        $this->logger->debug('TLP: linked tasks by type for task '.$task_id.' -> '.json_encode(array_map(function($arr){return array_map(function($t){return $t["id"];}, $arr);}, $out)));
         return $out;
     }
+
+    // --- Policy checks ------------------------------------------------------
 
     public function canMoveOutOfBacklog($task_id, $dst_column_id, &$reason = '')
     {
@@ -98,9 +104,11 @@ class PolicyModel extends Base
         if ((int)$task['column_id'] === $backlog_id && (int)$dst_column_id !== $backlog_id) {
 
             if ($this->canBypass($project_id)) {
+                $this->logger->info('TLP: bypass move constraint for task '.$task_id.' by admin/manager');
                 return true;
             }
 
+            // 1) Blockers must leave backlog
             if ((int)$this->projectMetadataModel->get($project_id, 'tlp_enforce_blocker_move_out_backlog', 1) === 1) {
                 $ids = $this->getLinkTypeIds();
                 $block_lids = array_filter([$ids['blocks'], $ids['is blocked by']]);
@@ -110,6 +118,7 @@ class PolicyModel extends Base
                         foreach ($linked[$lid] as $other) {
                             if ((int)$other['column_id'] === $backlog_id) {
                                 $reason = t('Task %s is blocked by %s still in Backlog.', '#'.$task_id, '#'.$other['id']);
+                                $this->logger->warning('TLP: move denied for task '.$task_id.' because blocker '.$other['id'].' is still in backlog');
                                 return false;
                             }
                         }
@@ -117,6 +126,7 @@ class PolicyModel extends Base
                 }
             }
 
+            // 2) Duplicate concurrency policy
             $dup_policy = $this->projectMetadataModel->get($project_id, 'tlp_duplicates_policy', 'allow');
             if ($dup_policy === 'disallow_both_active') {
                 $ids = $this->getLinkTypeIds();
@@ -127,6 +137,7 @@ class PolicyModel extends Base
                         foreach ($linked[$lid] as $other) {
                             if ((int)$other['column_id'] !== $backlog_id && !$this->isTaskClosed($other)) {
                                 $reason = t('Duplicate %s is already active; cannot activate both.', '#'.$other['id']);
+                                $this->logger->warning('TLP: move denied for task '.$task_id.' because duplicate '.$other['id'].' already active');
                                 return false;
                             }
                         }
@@ -134,6 +145,7 @@ class PolicyModel extends Base
                 }
             }
         }
+        $this->logger->debug('TLP: move allowed for task '.$task_id.' to column '.$dst_column_id);
         return true;
     }
 
@@ -145,18 +157,21 @@ class PolicyModel extends Base
         $project_id = (int)$task['project_id'];
 
         if ($this->canBypass($project_id)) {
+            $this->logger->info('TLP: bypass close constraint for task '.$task_id.' by admin/manager');
             return true;
         }
 
         $ids = $this->getLinkTypeIds();
         $linked = $this->getLinkedTasksByType($task_id);
 
+        // Blockers must be closed before closing
         if ((int)$this->projectMetadataModel->get($project_id, 'tlp_enforce_blocker_close', 1) === 1) {
             foreach (array_filter([$ids['blocks'], $ids['is blocked by']]) as $lid) {
                 if (isset($linked[$lid])) {
                     foreach ($linked[$lid] as $other) {
                         if (!$this->isTaskClosed($other)) {
                             $reason = t('Task %s is blocked by %s not closed yet.', '#'.$task_id, '#'.$other['id']);
+                            $this->logger->warning('TLP: close denied for task '.$task_id.' because blocker '.$other['id'].' not closed');
                             return false;
                         }
                     }
@@ -164,39 +179,46 @@ class PolicyModel extends Base
             }
         }
 
+        // Parent requires children closed
         if ((int)$this->projectMetadataModel->get($project_id, 'tlp_parent_requires_children_closed', 1) === 1) {
             if (isset($linked[$ids['is a parent of']])) {
                 foreach ($linked[$ids['is a parent of']] as $child) {
                     if (!$this->isTaskClosed($child)) {
                         $reason = t('Parent cannot be closed: child %s still open.', '#'.$child['id']);
+                        $this->logger->warning('TLP: close denied for parent task '.$task_id.' because child '.$child['id'].' open');
                         return false;
                     }
                 }
             }
         }
 
+        // Milestone requires targets closed
         if ((int)$this->projectMetadataModel->get($project_id, 'tlp_milestone_requires_targets_closed', 1) === 1) {
             if (isset($linked[$ids['is a milestone of']])) {
                 foreach ($linked[$ids['is a milestone of']] as $target) {
                     if (!$this->isTaskClosed($target)) {
                         $reason = t('Milestone cannot be closed: target %s still open.', '#'.$target['id']);
+                        $this->logger->warning('TLP: close denied for milestone '.$task_id.' because target '.$target['id'].' open');
                         return false;
                     }
                 }
             }
         }
 
+        // "is fixed by" must be closed
         if ((int)$this->projectMetadataModel->get($project_id, 'tlp_fix_requires_fix_task_closed', 1) === 1) {
             if (isset($linked[$ids['is fixed by']])) {
                 foreach ($linked[$ids['is fixed by']] as $fix) {
                     if (!$this->isTaskClosed($fix)) {
-                        $reason = t('Cannot close: linked fix %s is not closed.');
+                        $reason = t('Cannot close: linked fix %s is not closed.', '#'.$fix['id']);
+                        $this->logger->warning('TLP: close denied for task '.$task_id.' because fix '.$fix['id'].' not closed');
                         return false;
                     }
                 }
             }
         }
 
+        $this->logger->debug('TLP: close allowed for task '.$task_id);
         return true;
     }
 
@@ -216,6 +238,7 @@ class PolicyModel extends Base
             if (isset($linked[$lid])) {
                 foreach ($linked[$lid] as $other) {
                     if (!$this->isTaskClosed($other)) {
+                        $this->logger->info('TLP: auto-closing duplicate '.$other['id'].' because '.$task_id.' closed');
                         $this->taskModel->close($other['id']);
                     }
                 }

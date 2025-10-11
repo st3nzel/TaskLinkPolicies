@@ -12,10 +12,11 @@ class TaskModel extends \Kanboard\Model\TaskModel
             if (isset($this->container['flash'])) {
                 $this->container['flash']->failure($reason ?: t('Policy violation: cannot close task.'));
             }
-            $this->logger->info('TaskLinkPolicies: prevented closing task '.$task_id.' - '.$reason);
+            $this->logger->info('TLP: prevented closing task '.$task_id.' - '.$reason);
             return false;
         }
 
+        $this->logger->debug('TLP: closing task '.$task_id.' allowed by policy');
         $res = parent::close($task_id, $force_close);
 
         if ($res) {

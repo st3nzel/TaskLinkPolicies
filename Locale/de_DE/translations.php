@@ -1,7 +1,11 @@
 <?php
 
 return array(
+    'Project Policies' => 'Projekt-Richtlinien',
     'Task Link Policies' => 'Task-Link-Regeln',
+    'Blocking & Dependencies' => 'Blocker & Abhängigkeiten',
+    'Duplicates & Backlog' => 'Duplikate & Backlog',
+    'Open Project Policies' => 'Projekt-Richtlinien öffnen',
     'Blockers must leave Backlog before blocked task can leave Backlog' => 'Blocker müssen den Backlog verlassen, bevor die blockierte Aufgabe den Backlog verlassen darf',
     'Blockers must be closed before blocked task can be closed' => 'Blocker müssen geschlossen sein, bevor die blockierte Aufgabe geschlossen werden darf',
     'Parent tasks require all children to be closed before closing' => 'Übergeordnete Aufgaben können erst geschlossen werden, wenn alle Unteraufgaben geschlossen sind',
