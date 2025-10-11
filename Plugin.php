@@ -32,7 +32,7 @@ class Plugin extends Base
         });
 
         // Small CSS to make our panel tidy (optional)
-        $this->template->hook->attach('template:layout:head', 'TaskLinkPolicies:assets/head');
+        //$this->template->hook->attach('template:layout:head', 'TaskLinkPolicies:assets/head');
     }
 
     public function onStartup()
