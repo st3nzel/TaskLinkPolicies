@@ -30,9 +30,11 @@ class ProjectPolicyController extends BaseController
                     'project'  => $project,
                     'settings' => $settings,
                     'title'    => t('Project Policies'),
-                ]
+                ],
+                'project/sidebar' // ← Sidebar explizit (Default ist zwar auch 'project/sidebar')
             )
         );
+
     }
 
     public function save()
