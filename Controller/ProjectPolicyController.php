@@ -25,7 +25,7 @@ class ProjectPolicyController extends BaseController
         // >>> WICHTIG: Projekt-Layout, nicht raw rendern <<<
         $this->response->html(
             $this->helper->layout->project(
-                'TaskLinkPolicies:project/policies',
+                'taskLinkPolicies:project/policies',
                 [
                     'project'  => $project,
                     'settings' => $settings,
