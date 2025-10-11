@@ -12,7 +12,7 @@ class ProjectPolicyController extends BaseController
         $this->logger->debug('TLP: render settings page for project '.$project['id']);
         return $this->response->html(
             $this->helper->layout->project(
-                'TaskLinkPolicies:project/policies',
+                'taskLinkPolicies:project/policies',
                 array(
                     'project' => $project,
                 )
