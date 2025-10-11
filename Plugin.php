@@ -16,8 +16,8 @@ class Plugin extends Base
         $this->template->hook->attach('template:project:integrations', 'taskLinkPolicies:project/integration');
 
         // Routes
-        $this->route->addRoute('/project/:project_id/policies', 'ProjectPolicyController', 'index', 'taskLinkPolicies');
-        $this->route->addRoute('/project/:project_id/tasklink-policies/save', 'ProjectPolicyController', 'save', 'taskLinkPolicies');
+        $this->route->addRoute('/project/:project_id/policies', 'ProjectPolicyController', 'index', 'TaskLinkPolicies');
+        $this->route->addRoute('/project/:project_id/tasklink-policies/save', 'ProjectPolicyController', 'save', 'TaskLinkPolicies');
 
         // ACL: only project managers can change settings
         $this->projectAccessMap->add('ProjectPolicyController', 'index', Role::PROJECT_MANAGER);
