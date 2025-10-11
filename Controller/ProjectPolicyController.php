@@ -1,5 +1,4 @@
 <?php
-
 namespace Kanboard\Plugin\TaskLinkPolicies\Controller;
 
 use Kanboard\Controller\BaseController;
@@ -9,8 +8,8 @@ class ProjectPolicyController extends BaseController
     public function index()
     {
         $project = $this->getProject();
-    
-        // Alle Defaults hier lesen (nicht im Template!)
+
+        // Werte für das Formular aus Metadaten laden (keine Model-Aufrufe im Template!)
         $settings = [
             'tlp_enforce_blocker_move_out_backlog' => (int) $this->projectMetadataModel->get($project['id'], 'tlp_enforce_blocker_move_out_backlog', 1),
             'tlp_enforce_blocker_close'            => (int) $this->projectMetadataModel->get($project['id'], 'tlp_enforce_blocker_close', 1),
@@ -22,48 +21,43 @@ class ProjectPolicyController extends BaseController
             'tlp_backlog_column_id'                => (int) $this->projectMetadataModel->get($project['id'], 'tlp_backlog_column_id', 0),
             'tlp_admin_can_override'               => (int) $this->projectMetadataModel->get($project['id'], 'tlp_admin_can_override', 0),
         ];
-    
+
+        // >>> WICHTIG <<<  -> im **Projekt-Layout** rendern
         $this->response->html(
-            $this->helper->layout->project('taskLinkPolicies:project/policies', [
-                'project'  => $project,
-                'settings' => $settings,
-                'title'    => t('Project Policies'),
-            ])
+            $this->helper->layout->project(
+                'taskLinkPolicies:project/policies',
+                [
+                    'project'  => $project,
+                    'settings' => $settings,
+                    'title'    => t('Project Policies'),
+                ]
+            )
         );
     }
-
 
     public function save()
     {
         $project = $this->getProject();
-        $project_id = (int) $project['id'];
+        $v = $this->request->getValues();
 
-        $values = $this->request->getValues();
+        $toSave = [
+            'tlp_enforce_blocker_move_out_backlog' => empty($v['tlp_enforce_blocker_move_out_backlog']) ? 0 : 1,
+            'tlp_enforce_blocker_close'            => empty($v['tlp_enforce_blocker_close']) ? 0 : 1,
+            'tlp_parent_requires_children_closed'  => empty($v['tlp_parent_requires_children_closed']) ? 0 : 1,
+            'tlp_milestone_requires_targets_closed'=> empty($v['tlp_milestone_requires_targets_closed']) ? 0 : 1,
+            'tlp_fix_requires_fix_task_closed'     => empty($v['tlp_fix_requires_fix_task_closed']) ? 0 : 1,
+            'tlp_duplicates_policy'                => $v['tlp_duplicates_policy'] ?? 'allow',
+            'tlp_backlog_column_mode'              => $v['tlp_backlog_column_mode'] ?? 'first',
+            'tlp_backlog_column_id'                => (int) ($v['tlp_backlog_column_id'] ?? 0),
+            'tlp_admin_can_override'               => empty($v['tlp_admin_can_override']) ? 0 : 1,
+        ];
 
-        $settings = array(
-            'tlp_enforce_blocker_move_out_backlog' => empty($values['tlp_enforce_blocker_move_out_backlog']) ? 0 : 1,
-            'tlp_enforce_blocker_close'            => empty($values['tlp_enforce_blocker_close']) ? 0 : 1,
-            'tlp_parent_requires_children_closed'  => empty($values['tlp_parent_requires_children_closed']) ? 0 : 1,
-            'tlp_milestone_requires_targets_closed'=> empty($values['tlp_milestone_requires_targets_closed']) ? 0 : 1,
-            'tlp_fix_requires_fix_task_closed'     => empty($values['tlp_fix_requires_fix_task_closed']) ? 0 : 1,
-            'tlp_duplicates_policy'                => isset($values['tlp_duplicates_policy']) ? $values['tlp_duplicates_policy'] : 'allow',
-            'tlp_backlog_column_mode'              => isset($values['tlp_backlog_column_mode']) ? $values['tlp_backlog_column_mode'] : 'first',
-            'tlp_backlog_column_id'                => isset($values['tlp_backlog_column_id']) ? (int) $values['tlp_backlog_column_id'] : 0,
-            'tlp_admin_can_override'               => empty($values['tlp_admin_can_override']) ? 0 : 1,
-        );
+        $this->projectMetadataModel->save($project['id'], $toSave);
+        $this->flash->success(t('Settings saved successfully.'));
 
-        $this->logger->debug('TLP: saving settings for project '.$project_id.' values='.json_encode($settings));
-
-        if ($this->projectMetadataModel->save($project_id, $settings)) {
-            $this->flash->success(t('Task Link Policies saved.'));
-        } else {
-            $this->flash->failure(t('Unable to save Task Link Policies.'));
-        }
-
-        // Redirect back to our own tab
-        return $this->response->redirect(
-            $this->helper->url->to('ProjectPolicyController', 'index', array('plugin' => 'TaskLinkPolicies', 'project_id' => $project_id)),
-            true
-        );
+        return $this->response->redirect($this->helper->url->to(
+            'ProjectPolicyController', 'index',
+            ['project_id' => $project['id'], 'plugin' => 'taskLinkPolicies']
+        ));
     }
 }
