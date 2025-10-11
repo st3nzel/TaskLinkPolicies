@@ -9,7 +9,7 @@ class ProjectPolicyController extends BaseController
     {
         $project = $this->getProject();
 
-        // Werte für das Formular aus Metadaten laden (keine Model-Aufrufe im Template!)
+        // Werte VORAB laden (keine Model-Aufrufe im Template)
         $settings = [
             'tlp_enforce_blocker_move_out_backlog' => (int) $this->projectMetadataModel->get($project['id'], 'tlp_enforce_blocker_move_out_backlog', 1),
             'tlp_enforce_blocker_close'            => (int) $this->projectMetadataModel->get($project['id'], 'tlp_enforce_blocker_close', 1),
@@ -22,7 +22,7 @@ class ProjectPolicyController extends BaseController
             'tlp_admin_can_override'               => (int) $this->projectMetadataModel->get($project['id'], 'tlp_admin_can_override', 0),
         ];
 
-        // >>> WICHTIG <<<  -> im **Projekt-Layout** rendern
+        // >>> WICHTIG: Projekt-Layout, nicht raw rendern <<<
         $this->response->html(
             $this->helper->layout->project(
                 'taskLinkPolicies:project/policies',
