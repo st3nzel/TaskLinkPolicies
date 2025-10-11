@@ -11,9 +11,9 @@ class Plugin extends Base
     public function initialize()
     {
         // Add our own Project Settings tab entry
-        $this->template->hook->attach('template:project:sidebar', 'taskLinkPolicies:project/sidebar');
+        $this->template->hook->attach('template:project:sidebar', 'TaskLinkPolicies:project/sidebar');
         // Keep the old Integrations hook as a fallback (some users expect it there)
-        $this->template->hook->attach('template:project:integrations', 'taskLinkPolicies:project/integration');
+        $this->template->hook->attach('template:project:integrations', 'TaskLinkPolicies:project/integration');
 
         // Routes
         $this->route->addRoute('/project/:project_id/policies', 'ProjectPolicyController', 'index', 'TaskLinkPolicies');
@@ -32,7 +32,7 @@ class Plugin extends Base
         });
 
         // Small CSS to make our panel tidy (optional)
-        $this->template->hook->attach('template:layout:head', 'taskLinkPolicies:assets/head');
+        $this->template->hook->attach('template:layout:head', 'TaskLinkPolicies:assets/head');
     }
 
     public function onStartup()
