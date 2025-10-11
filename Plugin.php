@@ -11,12 +11,13 @@ class Plugin extends Base
     public function initialize()
     {
         // Add our own Project Settings tab entry
-        $this->template->hook->attach('template:project:sidebar', 'TaskLinkPolicies:project/sidebar');
+        $this->template->hook->attach('template:project:sidebar', 'taskLinkPolicies:project/sidebar');
         // Keep the old Integrations hook as a fallback (some users expect it there)
-        $this->template->hook->attach('template:project:integrations', 'TaskLinkPolicies:project/integration');
+        $this->template->hook->attach('template:project:integrations', 'taskLinkPolicies:project/integration');
 
         // Routes
-        $this->route->addRoute('/project/:project_id/policies', 'ProjectPolicyController', 'index', 'TaskLinkPolicies');
+        //$this->route->addRoute('/project/:project_id/policies', 'ProjectPolicyController', 'index', 'TaskLinkPolicies');
+        $this->route->addRoute('/project/:project_id/policies', 'ProjectPolicyController', 'index');
         $this->route->addRoute('/project/:project_id/tasklink-policies/save', 'ProjectPolicyController', 'save', 'TaskLinkPolicies');
 
         // ACL: only project managers can change settings
@@ -32,7 +33,7 @@ class Plugin extends Base
         });
 
         // Small CSS to make our panel tidy (optional)
-        //$this->template->hook->attach('template:layout:head', 'TaskLinkPolicies:assets/head');
+        //$this->template->hook->attach('template:layout:head', 'taskLinkPolicies:assets/head');
     }
 
     public function onStartup()
