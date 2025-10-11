@@ -9,7 +9,6 @@ class TaskModel extends \Kanboard\Model\TaskModel
         $policy = new PolicyModel($this->container);
         $reason = '';
         if (!$policy->canClose($task_id, $reason)) {
-            // Show a friendly error to the user
             if (isset($this->container['flash'])) {
                 $this->container['flash']->failure($reason ?: t('Policy violation: cannot close task.'));
             }
@@ -20,7 +19,6 @@ class TaskModel extends \Kanboard\Model\TaskModel
         $res = parent::close($task_id, $force_close);
 
         if ($res) {
-            // Optionally auto-close duplicates
             $policy->handleDuplicatesOnClose($task_id);
         }
 

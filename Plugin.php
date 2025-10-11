@@ -4,20 +4,22 @@ namespace Kanboard\Plugin\TaskLinkPolicies;
 
 use Kanboard\Core\Plugin\Base;
 use Kanboard\Core\Translator;
+use Kanboard\Core\Security\Role;
 
 class Plugin extends Base
 {
     public function initialize()
     {
-        // Add settings panel under Project → Integrations, like official Slack plugin does
-        // so admins can tweak the rules per project.
+        // UI: add a panel under Project → Integrations
         $this->template->hook->attach('template:project:integrations', 'tasklinkpolicies:project/integration');
 
-        // Register controller routes to save settings
-        $this->route->addRoute('/project/:project_id/tasklink-policies/save', 'ProjectPolicyController', 'save', 'tasklinkpolicies');
+        // Route to save settings (⚠️ plugin name case must match namespace for routing)
+        $this->route->addRoute('/project/:project_id/tasklink-policies/save', 'ProjectPolicyController', 'save', 'TaskLinkPolicies');
 
-        // Override core models to enforce policies before moves/closes
-        // Pattern based on Kanboard docs: override container services with our own classes.
+        // Authorize only project managers to save
+        $this->projectAccessMap->add('ProjectPolicyController', 'save', Role::PROJECT_MANAGER);
+
+        // Override models to enforce policies
         $this->container['taskModel'] = $this->container->factory(function ($c) {
             return new \Kanboard\Plugin\TaskLinkPolicies\Model\TaskModel($c);
         });
@@ -49,17 +51,16 @@ class Plugin extends Base
 
     public function getPluginVersion()
     {
-        return '0.1.0';
+        return '0.2.0';
     }
 
     public function getCompatibleVersion()
     {
-        // Tested against Kanboard >= 1.2.20, should work with newer versions.
         return '>=1.2.20';
     }
 
     public function getPluginHomepage()
     {
-        return 'https://example.com/tasklinkpolicies';
+        return 'https://github.com/st3nzel/TaskLinkPolicies';
     }
 }

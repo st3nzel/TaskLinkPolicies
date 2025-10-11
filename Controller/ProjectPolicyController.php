@@ -9,7 +9,7 @@ class ProjectPolicyController extends BaseController
     public function save()
     {
         $project = $this->getProject();
-        $project_id = $project['id'];
+        $project_id = (int) $project['id'];
 
         $values = $this->request->getValues();
 
@@ -31,6 +31,9 @@ class ProjectPolicyController extends BaseController
             $this->flash->failure(t('Unable to save Task Link Policies.'));
         }
 
-        return $this->response->redirect($this->helper->url->to('ProjectViewController', 'integrations', array('project_id' => $project_id), false, '', 'integrations'), true);
+        return $this->response->redirect(
+            $this->helper->url->to('ProjectViewController', 'integrations', array('project_id' => $project_id), false, '', 'integrations'),
+            true
+        );
     }
 }
